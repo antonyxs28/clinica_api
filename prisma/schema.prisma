@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Clinica {
+  id           String        @id @default(cuid())
+  nome         String
+  cnpj         String        @unique
+  endereco     String
+  usuarios     Usuario[]
+  pacientes    Paciente[]
+  agendamentos Agendamento[]
+  financeiro   Financeiro[]
+  convites     Convite[]
+  prontuarios  Prontuario[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Usuario {
+  id          String        @id @default(cuid())
+  nome        String
+  email       String        @unique
+  senha       String
+  papel       String
+  clinica     Clinica       @relation(fields: [clinicaId], references: [id])
+  clinicaId   String
+  pacientes   Paciente[]    @relation("ClinicoPacientes")
+  prontuarios Prontuario[]  @relation("ClinicoProntuarios")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Paciente {
+  id            String        @id @default(cuid())
+  nome          String
+  email         String        @unique
+  telefone      String?
+  dataNascimento DateTime?
+  clinica       Clinica       @relation(fields: [clinicaId], references: [id])
+  clinicaId     String
+  clinico       Usuario?      @relation("ClinicoPacientes", fields: [clinicoId], references: [id])
+  clinicoId     String?
+  prontuario    Prontuario?
+  agendamentos  Agendamento[]
+  financeiro    Financeiro[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Agendamento {
+  id          String   @id @default(cuid())
+  data        DateTime
+  status      String   @default("agendado")
+  descricao   String?
+  clinica     Clinica  @relation(fields: [clinicaId], references: [id])
+  clinicaId   String
+  paciente    Paciente @relation(fields: [pacienteId], references: [id])
+  pacienteId  String
+  financeiro  Financeiro?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Financeiro {
+  id           String   @id @default(cuid())
+  valor        Float
+  tipo         String
+  status       String   @default("pendente")
+  descricao    String?
+  clinica      Clinica  @relation(fields: [clinicaId], references: [id])
+  clinicaId    String
+  paciente     Paciente @relation(fields: [pacienteId], references: [id])
+  pacienteId   String
+  agendamento  Agendamento? @relation(fields: [agendamentoId], references: [id])
+  agendamentoId String?      @unique
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Convite {
+  id         String   @id @default(cuid())
+  email      String
+  codigo     String
+  status     String   @default("pendente")
+  clinica    Clinica  @relation(fields: [clinicaId], references: [id])
+  clinicaId  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Prontuario {
+  id          String   @id @default(cuid())
+  descricao   String
+  clinica     Clinica  @relation(fields: [clinicaId], references: [id])
+  clinicaId   String
+  paciente    Paciente @relation(fields: [pacienteId], references: [id])
+  pacienteId  String   @unique
+  clinico     Usuario? @relation("ClinicoProntuarios", fields: [clinicoId], references: [id])
+  clinicoId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
